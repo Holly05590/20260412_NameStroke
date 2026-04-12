@@ -1,0 +1,8 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(dir \"c:\\\\YACHI_DATA\\\\AI_Design\\\\20260412_NameStroke\")",
+      "WebSearch"
+    ]
+  }
+}
