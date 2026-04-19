@@ -26,7 +26,7 @@ const STROKE_DB = {
   '陳':16,'陸':16,'陽':17,'陰':16,'隆':17,'阮':12,'阿':13,
   '隋':17,'陵':16,'院':15,'附':13,'階':17,'際':19,
   // 阝右（邑旁）+4：阝標準3劃→邑7劃，補正+4
-  '郭':15,'鄭':19,'鄧':19,'邱':12,'邵':12,'鄒':19,'邦':9,
+  '郭':15,'鄭':19,'鄧':19,'邱':12,'鄒':19,'邦':9,
   '郁':13,'鄉':17,'都':15,'郎':14,
 
   // ── 常用名字字（無補正，直接用傳統楷書劃數） ───────────
@@ -77,7 +77,7 @@ const STROKE_DB = {
   // ── 含玉旁補正的名字字（玉旁=5，已加+1） ───────────────
   '玲':10,'珍':10,'珠':11,'琪':13,'琬':13,'琳':13,'瑞':14,
   '瑤':15,'瑋':14,'瑄':14,'琴':13,'玫':8, '珮':11,'璇':17,
-  '瑩':16,'璐':16,'璟':17,'瓊':20,'玨':9, '瑛':14,'璞':16,
+  '瑩':16,'璐':16,'璟':17,'瓊':20, '瑛':14,'璞':16,
   '璽':18,
 
   // ── 含艹補正的名字字（艹=6，已加+2） ───────────────────
@@ -95,11 +95,22 @@ const STROKE_DB = {
    優先查 STROKE_DB；查不到才退回 cnchar + 偏旁補正表
    ════════════════════════════════════════════════════════ */
 
-// 備用補正表（用於 STROKE_DB 未收錄、cnchar 能查到的字）
-const CORRECTION = {
-  '氵類': 0, // 個別字已在 STROKE_DB 處理
-  // 如有遺漏的氵字，可在此新增：格式 '字': delta
+// 部首 → 補正值（供 cnchar.radical 自動偵測使用）
+const RADICAL_DELTA = {
+  '水': 1, '氵': 1,   // 氵類
+  '心': 1, '忄': 1,   // 忄類
+  '手': 1, '扌': 1,   // 扌類
+  '犬': 1, '犭': 1,   // 犭類
+  '示': 1, '礻': 1,   // 礻類
+  '玉': 1, '王': 1,    // 玉旁（cnchar 可能回傳 '玉' 或 '王'）
+  '艸': 2, '艹': 2,   // 艹類
+  '衣': 1, '衤': 1,   // 衤類
+  '阜': 5,             // 阝左（阜旁）
+  '邑': 4,             // 阝右（邑旁）
 };
+
+// 個別字手動補正（極少數 cnchar.radical 偵測不準的例外）
+const CORRECTION = {};
 
 function getStroke(char) {
   if (!char || !/[\u4e00-\u9fff\u3400-\u4dbf\uf900-\ufaff]/.test(char)) return null;
@@ -107,12 +118,22 @@ function getStroke(char) {
   // ① 優先查預計算資料庫
   if (STROKE_DB[char] !== undefined) return STROKE_DB[char];
 
-  // ② 退回 cnchar 查詢（處理資料庫未收錄的字）
+  // ② 退回 cnchar 查詢 + 部首自動補正
   try {
     const raw = cnchar.stroke(char);
     const base = typeof raw === 'number' ? raw : (Array.isArray(raw) ? raw[0] : null);
     if (base == null || isNaN(base) || base < 1) return null;
-    const delta = CORRECTION[char] ?? 0;
+
+    // 優先用手動補正表；否則以 cnchar.radical 自動偵測部首
+    let delta = CORRECTION[char] ?? null;
+    if (delta === null) {
+      try {
+        const rad = typeof cnchar.radical === 'function' ? cnchar.radical(char) : null;
+        const radStr = typeof rad === 'string' ? rad
+                     : (Array.isArray(rad) ? rad[0] : null);
+        delta = (radStr && RADICAL_DELTA[radStr] !== undefined) ? RADICAL_DELTA[radStr] : 0;
+      } catch(_) { delta = 0; }
+    }
     return base + delta;
   } catch(e) {
     return null;
