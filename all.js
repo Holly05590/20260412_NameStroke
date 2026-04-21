@@ -23,7 +23,7 @@ const STROKE_DB = {
   // 艹+2
   '蔡':17,'葉':15,'莊':13,'蘇':22,
   // 阝左（阜旁）+5：阝標準3劃→阜8劃，補正+5
-  '陳':16,'陸':16,'陽':17,'陰':16,'隆':17,'阮':12,'阿':13,
+  '陸':16,'陽':17,'陰':16,'隆':17,'阮':12,'阿':13,
   '隋':17,'陵':16,'院':15,'附':13,'階':17,'際':19,
   // 阝右（邑旁）+4：阝標準3劃→邑7劃，補正+4
   '郭':15,'鄭':19,'鄧':19,'邱':12,'鄒':19,'邦':9,
@@ -81,7 +81,7 @@ const STROKE_DB = {
   '璽':18,
 
   // ── 含艹補正的名字字（艹=6，已加+2） ───────────────────
-  '芝':8, '花':9, '芳':9, '英':11,'茂':10,'茜':12,'茵':12,
+  '芝':8, '芳':9, '茉':11,'茱':12,'英':11,'茂':10,'茜':12,'茵':12,
   '莉':13,'菁':14,'菲':14,'萍':14,'薇':18,'蘭':23,'菊':14,
   '蓉':17,'蒼':16,'蓁':16,'薰':19,'蘿':23,'荻':13,'藍':20,'蓮':17,
   '蕭':19,'藤':21,'蒲':16,
@@ -112,31 +112,55 @@ const RADICAL_DELTA = {
 // 個別字手動補正（極少數 cnchar.radical 偵測不準的例外）
 const CORRECTION = {};
 
+// 回傳 { n: number|null, uncertain: boolean }
+// uncertain=true 表示部首未識別，筆劃數可能需要人工確認
 function getStroke(char) {
-  if (!char || !/[\u4e00-\u9fff\u3400-\u4dbf\uf900-\ufaff]/.test(char)) return null;
+  if (!char || !/[\u4e00-\u9fff\u3400-\u4dbf\uf900-\ufaff]/.test(char))
+    return { n: null, uncertain: false };
 
-  // ① 優先查預計算資料庫
-  if (STROKE_DB[char] !== undefined) return STROKE_DB[char];
+  // ① 優先查預計算資料庫（已人工核對，確定正確）
+  if (STROKE_DB[char] !== undefined)
+    return { n: STROKE_DB[char], uncertain: false };
 
-  // ② 退回 cnchar 查詢 + 部首自動補正
+  // ② Unihan kRSUnicode：部首筆劃（康熙全形）+ 剩餘筆劃，自動涵蓋所有偏旁補正
+  if (typeof UNIHAN_RS !== 'undefined') {
+    const hex = char.codePointAt(0).toString(16).toUpperCase();
+    if (UNIHAN_RS[hex] !== undefined) {
+      const packed     = UNIHAN_RS[hex];
+      const radical    = packed >> 8;
+      const additional = packed & 0xFF;
+      return { n: KANGXI_STROKES[radical] + additional, uncertain: false };
+    }
+  }
+
+  // ③ 最終退回 cnchar（處理 Unihan 未收錄的極少數字）
   try {
     const raw = cnchar.stroke(char);
     const base = typeof raw === 'number' ? raw : (Array.isArray(raw) ? raw[0] : null);
-    if (base == null || isNaN(base) || base < 1) return null;
+    if (base == null || isNaN(base) || base < 1) return { n: null, uncertain: false };
 
-    // 優先用手動補正表；否則以 cnchar.radical 自動偵測部首
     let delta = CORRECTION[char] ?? null;
+    let uncertain = false;
+
     if (delta === null) {
       try {
         const rad = typeof cnchar.radical === 'function' ? cnchar.radical(char) : null;
-        const radStr = typeof rad === 'string' ? rad
-                     : (Array.isArray(rad) ? rad[0] : null);
-        delta = (radStr && RADICAL_DELTA[radStr] !== undefined) ? RADICAL_DELTA[radStr] : 0;
-      } catch(_) { delta = 0; }
+        const radStr = typeof rad === 'string' ? rad : (Array.isArray(rad) ? rad[0] : null);
+        if (radStr) {
+          delta = RADICAL_DELTA[radStr] ?? 0;
+          // 部首找到但不在補正表 → delta=0，一般正確；不標示不確定
+        } else {
+          delta = 0;
+          uncertain = true; // 部首完全讀不到，偏旁補正可能遺漏
+        }
+      } catch(_) {
+        delta = 0;
+        uncertain = true;
+      }
     }
-    return base + delta;
+    return { n: base + delta, uncertain };
   } catch(e) {
-    return null;
+    return { n: null, uncertain: false };
   }
 }
 
@@ -173,18 +197,34 @@ function calculate() {
     document.getElementById('c3').value.trim()
   ];
 
-  const strokes = chars.map(getStroke);
+  const results   = chars.map(getStroke);
+  const strokes   = results.map(r => r.n);
+  const uncertains = results.map(r => r.uncertain);
 
   // 更新筆劃卡
   const displayIds = ['d1','d2','d3'];
   const strokeIds  = ['s1','s2','s3'];
-  let anyFilled = false;
+  let anyFilled    = false;
+  let anyUncertain = false;
 
   chars.forEach((ch, i) => {
     document.getElementById(displayIds[i]).textContent = ch || '—';
-    document.getElementById(strokeIds[i]).textContent  = (strokes[i] !== null) ? strokes[i] : '—';
+    const el = document.getElementById(strokeIds[i]);
+    if (strokes[i] !== null) {
+      if (ch && uncertains[i]) {
+        el.innerHTML = strokes[i] + '<sup class="uncertain-mark">＊</sup>';
+        anyUncertain = true;
+      } else {
+        el.textContent = strokes[i];
+      }
+    } else {
+      el.textContent = '—';
+    }
     if (ch) anyFilled = true;
   });
+
+  const warnEl = document.getElementById('uncertain-warning');
+  if (warnEl) warnEl.style.display = anyUncertain ? 'block' : 'none';
 
   const rs = document.getElementById('result-section');
   if (anyFilled) {
