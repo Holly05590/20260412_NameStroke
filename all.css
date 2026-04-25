@@ -278,6 +278,27 @@ main {
   color: var(--ink);
 }
 
+/* ── 五行關係徽章（絕對定位於方格之間） ── */
+.wx-between-arrow {
+  position: absolute;
+  width: 26px;
+  height: 26px;
+  border-radius: 50%;
+  background: var(--cream);
+  border: 1.5px solid var(--border);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.9rem;
+  line-height: 1;
+  z-index: 10;
+  pointer-events: none;
+  transform: translate(-50%, -50%);
+}
+.wx-between-arrow.rel-sheng { color: var(--primary); border-color: var(--primary); }
+.wx-between-arrow.rel-ke    { color: #F59E0B;        border-color: #F59E0B; }
+.wx-between-arrow.rel-bi    { color: var(--accent);  border-color: var(--accent); }
+
 .wuge-name {
   font-size: 0.65rem;
   color: var(--primary);

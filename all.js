@@ -187,6 +187,63 @@ function toWuxing(n) {
   return '水 💧';
 }
 
+function toWuxingElem(n) {
+  const last = n % 10;
+  if (last === 1 || last === 2) return '木';
+  if (last === 3 || last === 4) return '火';
+  if (last === 5 || last === 6) return '土';
+  if (last === 7 || last === 8) return '金';
+  return '水';
+}
+
+// 回傳 { cls, symbol }；a=上方格，b=下方格，箭頭方向反映生剋流向
+function relInfo(a, b) {
+  if (!a || !b) return null;
+  const sheng = { '木':'火', '火':'土', '土':'金', '金':'水', '水':'木' };
+  const ke    = { '木':'土', '土':'水', '水':'火', '火':'金', '金':'木' };
+  if (a === b) return { cls: 'rel-bi', symbol: '‖' };
+  if (sheng[a] === b) return { cls: 'rel-sheng', symbol: '▽' }; // a生b → 向下
+  if (sheng[b] === a) return { cls: 'rel-sheng', symbol: '△' }; // b生a → 向上
+  if (ke[a] === b)    return { cls: 'rel-ke',    symbol: '▼' }; // a克b → 向下
+  if (ke[b] === a)    return { cls: 'rel-ke',    symbol: '▲' }; // b克a → 向上
+  return null;
+}
+
+function setWuxing(id, wuxingStr) {
+  const el = document.getElementById(id);
+  if (!el) return;
+  el.textContent = wuxingStr || '';
+}
+
+let _arrowConfig = [];
+
+function applyRelArrow(arrowId, sq1Id, sq2Id, rel) {
+  const arrow = document.getElementById(arrowId);
+  if (!arrow) return;
+  if (!rel) { arrow.hidden = true; return; }
+  const sq1 = document.getElementById(sq1Id);
+  const sq2 = document.getElementById(sq2Id);
+  const container = document.getElementById('result-section');
+  if (!sq1 || !sq2 || !container) { arrow.hidden = true; return; }
+  const cRect  = container.getBoundingClientRect();
+  const s1Rect = sq1.getBoundingClientRect();
+  const s2Rect = sq2.getBoundingClientRect();
+  const midY = (s1Rect.bottom + s2Rect.top) / 2 - cRect.top;
+  const midX = (s1Rect.left  + s1Rect.right)  / 2 - cRect.left;
+  arrow.style.left  = midX + 'px';
+  arrow.style.top   = midY + 'px';
+  arrow.className   = `wx-between-arrow ${rel.cls}`;
+  arrow.textContent = rel.symbol;
+  arrow.hidden = false;
+}
+
+function positionRelArrows() {
+  _arrowConfig.forEach(([arrowId, sq1Id, sq2Id, rel]) =>
+    applyRelArrow(arrowId, sq1Id, sq2Id, rel));
+}
+
+window.addEventListener('resize', positionRelArrows);
+
 /* ════════════════════════════════════════════════════════
    主計算函式
    ════════════════════════════════════════════════════════ */
@@ -252,14 +309,27 @@ function calculate() {
     document.getElementById('w-wai').textContent    = wai;
     document.getElementById('w-zong').textContent   = zong;
     document.getElementById('w-dongli').textContent = calcDongli(ren, di);
-    document.getElementById('wx-tian').textContent  = toWuxing(tian);
-    document.getElementById('wx-ren').textContent   = toWuxing(ren);
-    document.getElementById('wx-di').textContent    = toWuxing(di);
+    const tianElem = toWuxingElem(tian);
+    const renElem  = toWuxingElem(ren);
+    const diElem   = toWuxingElem(di);
+    setWuxing('wx-tian', toWuxing(tian));
+    setWuxing('wx-ren',  toWuxing(ren));
+    setWuxing('wx-di',   toWuxing(di));
+    _arrowConfig = [
+      ['wx-arrow-1', 'wx-tian', 'wx-ren', relInfo(tianElem, renElem)],
+      ['wx-arrow-2', 'wx-ren',  'wx-di',  relInfo(renElem,  diElem)],
+    ];
+    requestAnimationFrame(positionRelArrows);
   } else {
     ['w-tian','w-ren','w-di','w-wai','w-zong','w-dongli'].forEach(id =>
       document.getElementById(id).textContent = '—');
     ['wx-tian','wx-ren','wx-di'].forEach(id =>
       document.getElementById(id).textContent = '');
+    _arrowConfig = [];
+    ['wx-arrow-1','wx-arrow-2'].forEach(id => {
+      const el = document.getElementById(id);
+      if (el) el.hidden = true;
+    });
   }
 }
 
