@@ -320,6 +320,7 @@ function calculate() {
       ['wx-arrow-2', 'wx-ren',  'wx-di',  relInfo(renElem,  diElem)],
     ];
     requestAnimationFrame(positionRelArrows);
+    drawLiuyunChart(zong % 10, getBirthAge());
   } else {
     ['w-tian','w-ren','w-di','w-wai','w-zong','w-dongli'].forEach(id =>
       document.getElementById(id).textContent = '—');
@@ -330,6 +331,7 @@ function calculate() {
       const el = document.getElementById(id);
       if (el) el.hidden = true;
     });
+    drawLiuyunChart(null, getBirthAge());
   }
 }
 
@@ -351,8 +353,180 @@ document.querySelectorAll('.theme-btn').forEach(btn => {
 // 初始化：讀取已儲存主題
 applyTheme(localStorage.getItem('namestroke-theme') || 'tech');
 
+/* ════════════════════════════════════════════════════════
+   出生日期 → 年齡
+   ════════════════════════════════════════════════════════ */
+// 民國虛歲：出生那年算 1 歲，每到「生日後半年」歲數切換點再加 1
+// 切換點 = 生日月日 + 6 個月；到達切換點當天，「年齡年份」進為下一民國年
+// 公式：age = ageYear - birthROC + 1
+// 例：62年4月5日出生，今日 115年5月13日（未到 10月5日切換點）
+//   → ageYear = 115，age = 115 - 62 + 1 = 54
+function calcAge(rocYear, month, day) {
+  const now = new Date();
+  const gy  = now.getFullYear();
+  const gm  = now.getMonth() + 1;
+  const gd  = now.getDate();
+
+  let hm = month + 6;
+  if (hm > 12) hm -= 12;
+
+  const rocNow  = gy - 1911;
+  // 今日 MMDD >= 切換點 MMDD → 年齡年份進到下一民國年
+  const ageYear = (gm * 100 + gd) >= (hm * 100 + day)
+    ? rocNow + 1
+    : rocNow;
+
+  return ageYear - rocYear + 1;
+}
+
+function getBirthAge() {
+  const y = parseInt(document.getElementById('b-year')?.value);
+  const m = parseInt(document.getElementById('b-month')?.value);
+  const d = parseInt(document.getElementById('b-day')?.value);
+  if (!y || !m || !d || y < 1 || m < 1 || m > 12 || d < 1 || d > 31) return null;
+  return calcAge(y, m, d);
+}
+
+/* ════════════════════════════════════════════════════════
+   流年運程圖（SVG）
+   ════════════════════════════════════════════════════════ */
+// zongDigit：命宮個位數 (0–9)，null 不顯示數字
+// age：年齡，null 不顯示年齡徽章及高亮
+function drawLiuyunChart(zongDigit, age) {
+  const container = document.getElementById('liuyun-chart');
+  if (!container) return;
+
+  const CX = 250, CY = 250;
+  const RO = 215;  // 外圓
+  const RM = 172;  // 中環（數字 ↔ 名稱 分界）
+  const RI = 135;  // 內環（名稱 ↔ 星芒 分界）
+  const RS = 108;  // 星芒尖端
+  const RC = 33;   // 星芒內凹
+  const RK = 26;   // 中心圓
+
+  const rName = (RM + RI) / 2;  // 階段名稱置中半徑
+  const rNum  = (RO + RM) / 2;  // 流年數字置中半徑
+
+  function pt(r, a) {
+    const rad = (90 + a) * Math.PI / 180;
+    return [CX + r * Math.cos(rad), CY + r * Math.sin(rad)];
+  }
+  function lx(r, a) { return pt(r, a)[0].toFixed(2); }
+  function ly(r, a) { return pt(r, a)[1].toFixed(2); }
+  function xy(r, a) { return lx(r,a) + ',' + ly(r,a); }
+
+  const stages = [
+    { label: '胎',   angle:   0 },
+    { label: '養',   angle:  36 },
+    { label: '長生', angle:  72 },
+    { label: '冠帶', angle: 108 },
+    { label: '臨官', angle: 144 },
+    { label: '帝旺', angle: 180 },
+    { label: '衰',   angle: 216 },
+    { label: '病',   angle: 252 },
+    { label: '死',   angle: 288 },
+    { label: '絕',   angle: 324 },
+  ];
+  // 冠帶在 stages[3]，公式：(zongDigit + i - 3 + 10) % 10
+  const KUANDAI_IDX = 3;
+
+  const bounds    = [342, 18, 54, 90, 126, 162, 198, 234, 270, 306];
+  const degLabels = [0, 18, 54, 90, 126, 162, 180, 198, 234, 270, 306, 342];
+
+  // 扇形弧形路徑（環狀扇形）：從 a1 沿 chart CCW（SVG CW）到 a2
+  function annularSector(r1, r2, a1, a2) {
+    const f = n => n.toFixed(2);
+    const [x1, y1] = pt(r2, a1);
+    const [x2, y2] = pt(r2, a2);
+    const [x3, y3] = pt(r1, a2);
+    const [x4, y4] = pt(r1, a1);
+    return `M${f(x1)},${f(y1)} A${r2},${r2},0,0,1,${f(x2)},${f(y2)} L${f(x3)},${f(y3)} A${r1},${r1},0,0,0,${f(x4)},${f(y4)} Z`;
+  }
+
+  let s = `<svg viewBox="-15 -15 530 530" xmlns="http://www.w3.org/2000/svg" class="liuyun-svg">`;
+
+  // 三個同心圓：外/內圈用 ink，中環（數字分界）用 primary
+  s += `<circle cx="${CX}" cy="${CY}" r="${RO}" fill="none" stroke="currentColor" stroke-width="1.5"/>`;
+  s += `<circle cx="${CX}" cy="${CY}" r="${RM}" fill="none" stroke="var(--primary)" stroke-width="1" opacity="0.6"/>`;
+  s += `<circle cx="${CX}" cy="${CY}" r="${RI}" fill="none" stroke="currentColor" stroke-width="1"/>`;
+
+  // 年齡對應格高亮（扇形底色，畫在分隔線之前）
+  if (zongDigit != null && age != null) {
+    const ageDigit  = ((age % 10) + 10) % 10;
+    const matchIdx  = (ageDigit - zongDigit + KUANDAI_IDX + 10) % 10;
+    const a1 = stages[matchIdx].angle - 18;
+    const a2 = stages[matchIdx].angle + 18;
+    s += `<path d="${annularSector(RI, RO, a1, a2)}" fill="var(--primary)" opacity="0.22"/>`;
+  }
+
+  // 10 個扇形分隔線（RI → RO）
+  bounds.forEach(a => {
+    s += `<line x1="${lx(RI,a)}" y1="${ly(RI,a)}" x2="${lx(RO,a)}" y2="${ly(RO,a)}" stroke="currentColor" stroke-width="1"/>`;
+  });
+
+  // 十字虛線（0/180° 及 90/270°），用 primary 色
+  [[0,180],[90,270]].forEach(([a1,a2]) => {
+    s += `<line x1="${lx(RO,a1)}" y1="${ly(RO,a1)}" x2="${lx(RO,a2)}" y2="${ly(RO,a2)}" stroke="var(--primary)" stroke-width="1" stroke-dasharray="5,4" opacity="0.45"/>`;
+  });
+
+  // 階段名稱（內環 RI–RM）
+  const F = `font-family="Noto Sans TC,sans-serif" fill="currentColor" text-anchor="middle" dominant-baseline="middle"`;
+  stages.forEach(({ label, angle }) => {
+    const [x, y] = pt(rName, angle);
+    if (label.length === 2) {
+      s += `<text x="${x.toFixed(2)}" y="${(y-8).toFixed(2)}" font-size="13" ${F}>${label[0]}</text>`;
+      s += `<text x="${x.toFixed(2)}" y="${(y+8).toFixed(2)}" font-size="13" ${F}>${label[1]}</text>`;
+    } else {
+      s += `<text x="${x.toFixed(2)}" y="${y.toFixed(2)}" font-size="15" ${F}>${label}</text>`;
+    }
+  });
+
+  // 流年數字（外環 RM–RO），有命宮個位數時才顯示
+  if (zongDigit != null) {
+    const FN = `font-family="Noto Sans TC,sans-serif" text-anchor="middle" dominant-baseline="middle" font-weight="700"`;
+    stages.forEach(({ angle }, i) => {
+      const val = (zongDigit + i - KUANDAI_IDX + 10) % 10;
+      const [x, y] = pt(rNum, angle);
+      s += `<text x="${x.toFixed(2)}" y="${y.toFixed(2)}" font-size="17" fill="var(--primary)" ${FN}>${val}</text>`;
+    });
+  }
+
+  // 度數標籤（外圓外側）
+  degLabels.forEach(a => {
+    const [x, y] = pt(RO + 22, a);
+    s += `<text x="${x.toFixed(2)}" y="${y.toFixed(2)}" font-size="11" font-family="sans-serif" fill="currentColor" text-anchor="middle" dominant-baseline="middle" opacity="0.75">${a}°</text>`;
+  });
+
+  // 4 芒星 + 中心圓鏤空（evenodd）
+  const starPath = [0, 45, 90, 135, 180, 225, 270, 315].map((a, i) =>
+    (i === 0 ? 'M' : 'L') + xy(i % 2 === 0 ? RS : RC, a)
+  ).join(' ') + 'Z';
+  const H = RK;
+  const hole = `M${(CX+H).toFixed(2)},${CY} A${H},${H},0,1,0,${(CX-H).toFixed(2)},${CY} A${H},${H},0,1,0,${(CX+H).toFixed(2)},${CY} Z`;
+  // 星芒用 accent 色，中心圓外框也用 accent
+  s += `<path d="${starPath} ${hole}" fill-rule="evenodd" fill="var(--accent)"/>`;
+  s += `<circle cx="${CX}" cy="${CY}" r="${RK}" fill="none" stroke="var(--accent)" stroke-width="1.5"/>`;
+
+  // 年齡徽章（右上角，外圓之外）
+  if (age != null) {
+    const bx = 434, by = 12, bw = 72, bh = 54, mx = bx + bw / 2;
+    const FA = `font-family="Noto Sans TC,sans-serif" fill="var(--primary)" text-anchor="middle"`;
+    s += `<rect x="${bx}" y="${by}" width="${bw}" height="${bh}" rx="6" fill="var(--primary)" opacity="0.1"/>`;
+    s += `<rect x="${bx}" y="${by}" width="${bw}" height="${bh}" rx="6" fill="none" stroke="var(--primary)" stroke-width="1" opacity="0.35"/>`;
+    s += `<text x="${mx}" y="${by + 15}" dominant-baseline="middle" font-size="10" font-family="sans-serif" fill="var(--primary)" text-anchor="middle" opacity="0.8">年 齡</text>`;
+    s += `<text x="${mx - 4}" y="${by + 38}" dominant-baseline="middle" font-size="24" font-weight="700" ${FA}>${age}</text>`;
+    s += `<text x="${bx + bw - 6}" y="${by + 46}" dominant-baseline="middle" font-size="10" font-family="sans-serif" fill="var(--primary)" text-anchor="middle">歲</text>`;
+  }
+
+  s += `</svg>`;
+  container.innerHTML = s;
+}
+
+drawLiuyunChart();
+
 document.getElementById('btn-clear').addEventListener('click', () => {
   ['c1','c2','c3'].forEach(id => document.getElementById(id).value = '');
+  ['b-year','b-month','b-day'].forEach(id => document.getElementById(id).value = '');
   calculate();
   document.getElementById('c1').focus();
 });
@@ -387,5 +561,14 @@ document.getElementById('btn-clear').addEventListener('click', () => {
     if (this.value && id !== 'c3') {
       document.getElementById(id === 'c1' ? 'c2' : 'c3').focus();
     }
+  });
+});
+
+// 出生日期變更 → 重繪流年圖（不重新計算五格）
+['b-year', 'b-month', 'b-day'].forEach(id => {
+  document.getElementById(id)?.addEventListener('input', () => {
+    const zongText = document.getElementById('w-zong')?.textContent ?? '—';
+    const zong = parseInt(zongText);
+    drawLiuyunChart(isNaN(zong) ? null : zong % 10, getBirthAge());
   });
 });

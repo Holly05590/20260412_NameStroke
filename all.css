@@ -299,6 +299,49 @@ main {
 .wx-between-arrow.rel-ke    { color: #F59E0B;        border-color: #F59E0B; }
 .wx-between-arrow.rel-bi    { color: var(--accent);  border-color: var(--accent); }
 
+/* ── 出生日期輸入列 ── */
+.birth-row {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.35rem;
+  margin-bottom: 0.55rem;
+}
+.birth-label {
+  font-size: 0.78rem;
+  color: var(--accent);
+  letter-spacing: 0.1rem;
+}
+.birth-sep {
+  font-size: 0.82rem;
+  color: var(--ink);
+  opacity: 0.6;
+}
+.birth-num {
+  width: 38px;
+  padding: 4px 4px;
+  border: 1.5px solid var(--border);
+  border-radius: 4px;
+  background: var(--cream);
+  color: var(--ink);
+  font-size: 0.9rem;
+  font-family: inherit;
+  text-align: center;
+  outline: none;
+  -moz-appearance: textfield;
+}
+.birth-num::-webkit-outer-spin-button,
+.birth-num::-webkit-inner-spin-button { -webkit-appearance: none; margin: 0; }
+.birth-num:focus { border-color: var(--primary); }
+.birth-year { width: 52px; }
+
+/* ── 流年運程圖 ── */
+.liuyun-svg {
+  display: block;
+  width: 100%;
+  color: var(--ink);
+}
+
 .wuge-name {
   font-size: 0.65rem;
   color: var(--primary);
