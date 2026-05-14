@@ -334,6 +334,26 @@ main {
 .birth-num::-webkit-inner-spin-button { -webkit-appearance: none; margin: 0; }
 .birth-num:focus { border-color: var(--primary); }
 .birth-year { width: 52px; }
+.birth-title {
+  text-align: center;
+  font-size: 0.8rem;
+  color: var(--ink);
+  opacity: 0.55;
+  letter-spacing: 0.08em;
+  margin-bottom: 0.3rem;
+}
+.birth-num.input-error {
+  border-color: #e53e3e !important;
+  background: rgba(229,62,62,0.06);
+}
+.birth-error {
+  text-align: center;
+  font-size: 0.72rem;
+  color: #e53e3e;
+  min-height: 1em;
+  margin-top: -0.2rem;
+  margin-bottom: 0.35rem;
+}
 
 /* ── 流年運程圖 ── */
 .liuyun-svg {

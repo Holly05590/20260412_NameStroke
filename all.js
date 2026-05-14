@@ -357,6 +357,15 @@ applyTheme(localStorage.getItem('namestroke-theme') || 'tech');
    出生日期 → 年齡
    ════════════════════════════════════════════════════════ */
 // 民國虛歲：出生那年算 1 歲
+function daysInMonth(rocYear, month) {
+  const gy = rocYear + 1911;
+  if (month === 2) {
+    const leap = (gy % 4 === 0 && gy % 100 !== 0) || gy % 400 === 0;
+    return leap ? 29 : 28;
+  }
+  return [1,3,5,7,8,10,12].includes(month) ? 31 : 30;
+}
+
 // 切換點 = 生日 + 6 個月（半週年）；切換點當天歲數 +1
 //
 // 基準：rocNow − birthROC + 2
@@ -388,10 +397,53 @@ function calcAge(rocYear, month, day) {
 }
 
 function getBirthAge() {
-  const y = parseInt(document.getElementById('b-year')?.value);
-  const m = parseInt(document.getElementById('b-month')?.value);
-  const d = parseInt(document.getElementById('b-day')?.value);
-  if (!y || !m || !d || y < 1 || m < 1 || m > 12 || d < 1 || d > 31) return null;
+  const yEl  = document.getElementById('b-year');
+  const mEl  = document.getElementById('b-month');
+  const dEl  = document.getElementById('b-day');
+  const errEl = document.getElementById('birth-error');
+
+  const yv = yEl?.value ?? '';
+  const mv = mEl?.value ?? '';
+  const dv = dEl?.value ?? '';
+
+  [yEl, mEl, dEl].forEach(el => el?.classList.remove('input-error'));
+  if (errEl) errEl.textContent = '';
+
+  if (!yv && !mv && !dv) return null;
+
+  const y = parseInt(yv);
+  const m = parseInt(mv);
+  const d = parseInt(dv);
+  const errs = [];
+
+  const validY = !isNaN(y) && y >= 1 && y <= 999;
+  const validM = !isNaN(m) && m >= 1 && m <= 12;
+
+  if (yv && !validY) {
+    yEl.classList.add('input-error');
+    errs.push('年份請輸入 1–999');
+  }
+  if (mv && !validM) {
+    mEl.classList.add('input-error');
+    errs.push('月份請輸入 1–12');
+  }
+  if (dv) {
+    let maxDay;
+    if (validM && validY)      maxDay = daysInMonth(y, m);
+    else if (validM)           maxDay = m === 2 ? 29 : ([1,3,5,7,8,10,12].includes(m) ? 31 : 30);
+    else                       maxDay = 31;
+    if (isNaN(d) || d < 1 || d > maxDay) {
+      dEl.classList.add('input-error');
+      errs.push(validM ? `${m} 月最多 ${maxDay} 日` : '日期不合法');
+    }
+  }
+
+  if (errs.length) {
+    if (errEl) errEl.textContent = errs.join('　');
+    return null;
+  }
+  if (!yv || !mv || !dv || !validY || !validM) return null;
+
   return calcAge(y, m, d);
 }
 
@@ -534,7 +586,13 @@ drawLiuyunChart();
 
 document.getElementById('btn-clear').addEventListener('click', () => {
   ['c1','c2','c3'].forEach(id => document.getElementById(id).value = '');
-  ['b-year','b-month','b-day'].forEach(id => document.getElementById(id).value = '');
+  ['b-year','b-month','b-day'].forEach(id => {
+    const el = document.getElementById(id);
+    el.value = '';
+    el.classList.remove('input-error');
+  });
+  const errEl = document.getElementById('birth-error');
+  if (errEl) errEl.textContent = '';
   calculate();
   document.getElementById('c1').focus();
 });
@@ -575,6 +633,10 @@ document.getElementById('btn-clear').addEventListener('click', () => {
 // 出生日期變更 → 重繪流年圖（不重新計算五格）
 ['b-year', 'b-month', 'b-day'].forEach(id => {
   document.getElementById(id)?.addEventListener('input', () => {
+    if (id === 'b-year') {
+      const el = document.getElementById('b-year');
+      if (el.value.length > 3) el.value = el.value.slice(0, 3);
+    }
     const zongText = document.getElementById('w-zong')?.textContent ?? '—';
     const zong = parseInt(zongText);
     drawLiuyunChart(isNaN(zong) ? null : zong % 10, getBirthAge());
