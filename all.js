@@ -356,11 +356,18 @@ applyTheme(localStorage.getItem('namestroke-theme') || 'tech');
 /* ════════════════════════════════════════════════════════
    出生日期 → 年齡
    ════════════════════════════════════════════════════════ */
-// 民國虛歲：出生那年算 1 歲，每到「生日後半年」歲數切換點再加 1
-// 切換點 = 生日月日 + 6 個月；到達切換點當天，「年齡年份」進為下一民國年
-// 公式：age = ageYear - birthROC + 1
-// 例：62年4月5日出生，今日 115年5月13日（未到 10月5日切換點）
-//   → ageYear = 115，age = 115 - 62 + 1 = 54
+// 民國虛歲：出生那年算 1 歲
+// 切換點 = 生日 + 6 個月（半週年）；切換點當天歲數 +1
+//
+// 基準：rocNow − birthROC + 2
+// 扣減規則：
+//   ① 今日未到切換點 MMDD → −1（今年半週年未到）
+//   ② 生日在 7–12 月（半週年落在次年）→ −1
+//
+// 範例一：62年4月5日，今日 ROC 115年5月13日
+//   115 − 62 + 2 = 55，未到10月5日 −1 = 54 ✓
+// 範例二：100年11月29日，今日 ROC 115年5月13日
+//   115 − 100 + 2 = 17，未到5月29日 −1，生日在後半年 −1 = 15 ✓
 function calcAge(rocYear, month, day) {
   const now = new Date();
   const gy  = now.getFullYear();
@@ -368,15 +375,16 @@ function calcAge(rocYear, month, day) {
   const gd  = now.getDate();
 
   let hm = month + 6;
-  if (hm > 12) hm -= 12;
+  const wrapYear = hm > 12;   // 生日 7–12 月 → 半週年落在次年
+  if (wrapYear) hm -= 12;
 
-  const rocNow  = gy - 1911;
-  // 今日 MMDD >= 切換點 MMDD → 年齡年份進到下一民國年
-  const ageYear = (gm * 100 + gd) >= (hm * 100 + day)
-    ? rocNow + 1
-    : rocNow;
+  const rocNow    = gy - 1911;
+  const halfReach = (gm * 100 + gd) >= (hm * 100 + day);
 
-  return ageYear - rocYear + 1;
+  let age = rocNow - rocYear + 2;
+  if (!halfReach) age--;   // 今年切換點未到
+  if (wrapYear)   age--;   // 半週年跨年修正
+  return age;
 }
 
 function getBirthAge() {
