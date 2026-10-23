@@ -1,0 +1,11 @@
+{
+  "name": "namestroke",
+  "private": true,
+  "description": "姓名學筆劃查詢（純前端）；僅 generate-unihan.js 需要 Node 相依套件",
+  "scripts": {
+    "generate-unihan": "node generate-unihan.js"
+  },
+  "devDependencies": {
+    "adm-zip": "^0.5.17"
+  }
+}
