@@ -1,0 +1,127 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>手機加入 App 操作手冊</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;700;900&display=swap" rel="stylesheet">
+  <link rel="icon" type="image/png" href="./icon.png">
+  <link rel="stylesheet" href="./all.css">
+  <script>
+    // 套用主頁所選主題
+    try { document.documentElement.dataset.theme = localStorage.getItem('namestroke-theme') || 'tech'; } catch (e) {}
+  </script>
+  <style>
+    .manual { font-size: 0.85rem; line-height: 1.75; color: var(--ink); }
+    .manual p { margin-bottom: 0.5rem; }
+    .manual ol, .manual ul { padding-left: 1.4rem; margin-bottom: 0.5rem; }
+    .manual li { margin-bottom: 0.3rem; }
+    .manual b { color: var(--primary); }
+    .manual .note { font-size: 0.78rem; opacity: 0.75; }
+    .manual .url {
+      display: inline-block;
+      word-break: break-all;
+      color: var(--primary);
+    }
+    .faq { width: 100%; border-collapse: collapse; font-size: 0.78rem; }
+    .faq th, .faq td {
+      border-top: 1px solid var(--border);
+      padding: 0.45rem 0.3rem;
+      text-align: left;
+      vertical-align: top;
+    }
+    .faq th { color: var(--primary); white-space: nowrap; }
+    .faq td:first-child { font-weight: 700; width: 38%; }
+    .back-link {
+      display: block;
+      text-align: center;
+      margin-top: 0.8rem;
+      font-size: 0.8rem;
+      color: var(--primary);
+    }
+  </style>
+</head>
+<body>
+
+<div class="deco-top"></div>
+
+<header>
+  <div class="header-ornament">❧ 傳統命理 · 姓名筆劃 ❧</div>
+  <h1>手機加入 App</h1>
+  <p class="subtitle">操作手冊</p>
+  <div class="header-rule"><span>✦</span></div>
+</header>
+
+<main class="manual">
+
+  <div class="card">
+    <div class="section-title">開始之前</div>
+    <p>把「姓名學筆劃查詢」加到手機主畫面後，點一下圖示就能開啟，用起來像一個 App，不必每次重新輸入網址。整個過程約 1 分鐘，不需要到 App Store 或 Google Play 下載。</p>
+    <p>請先準備：</p>
+    <ul>
+      <li><b>網址</b>：<a class="url" href="https://holly05590.github.io/20260412_NameStroke/">https://holly05590.github.io/20260412_NameStroke/</a></li>
+      <li><b>瀏覽器</b>：iPhone / iPad 請用 <b>Safari</b>；Android 請用 <b>Chrome</b></li>
+      <li><b>網路</b>：第一次開啟需要連上網路（筆劃字庫與字型由網路載入）</li>
+    </ul>
+  </div>
+
+  <div class="card">
+    <div class="section-title">iPhone / iPad（Safari）</div>
+    <ol>
+      <li>開啟 <b>Safari</b>，在網址列輸入上面的網址，等頁面載入完成。</li>
+      <li>點畫面下方的 <b>分享</b> 按鈕（方框加向上箭頭）。iPad 的分享按鈕在右上角。</li>
+      <li>在選單中往下滑，點 <b>加入主畫面</b>。</li>
+      <li>名稱預設為「姓名學筆劃鑑定」，可以改短一點，例如「姓名學」。</li>
+      <li>點右上角 <b>加入</b>，主畫面就會出現圖示。</li>
+    </ol>
+    <p class="note">若使用 Chrome 等其他瀏覽器（iOS 16.4 以上），也可從分享選單找到「加入主畫面」；找不到時請改用 Safari。</p>
+  </div>
+
+  <div class="card">
+    <div class="section-title">Android（Chrome）</div>
+    <ol>
+      <li>開啟 <b>Chrome</b>，在網址列輸入上面的網址，等頁面載入完成。</li>
+      <li>點右上角的 <b>⋮</b>（三個點）選單。</li>
+      <li>點 <b>加到主畫面</b>。部分手機顯示為「安裝應用程式」或「新增至主螢幕」。</li>
+      <li>可以修改名稱，然後點 <b>新增</b>。</li>
+      <li>若跳出「加到主畫面」確認視窗，再點一次 <b>新增</b>，或長按圖示拖到想放的位置。</li>
+    </ol>
+    <p class="note">Samsung 手機若使用內建的 Samsung Internet：點右下角 <b>≡</b> 選單 → <b>新增頁面至</b> → <b>主螢幕</b>。</p>
+  </div>
+
+  <div class="card">
+    <div class="section-title">開啟與使用</div>
+    <p>在主畫面點「姓名學」圖示即可開啟，用法與網頁版相同：</p>
+    <ol>
+      <li>輸入姓、名一（必填）與名二（可留空），結果會自動顯示。</li>
+      <li>在流年運程圖上方輸入出生年月日（民國年），可看到虛歲、太歲星與發動年齡。</li>
+      <li>點「清　空」可重新輸入。</li>
+      <li>點標題下方的色點可切換主題風格，下次開啟會記得你的選擇。</li>
+    </ol>
+  </div>
+
+  <div class="card">
+    <div class="section-title">常見問題</div>
+    <table class="faq">
+      <tr><th>問題</th><th>解決方式</th></tr>
+      <tr><td>找不到「加入主畫面」</td><td>iPhone 請改用 Safari；分享選單要往下滑到底。Android 請確認用的是 Chrome。</td></tr>
+      <tr><td>用 LINE、Facebook 開啟連結時沒有選項</td><td>App 內建的瀏覽器不支援，請點右上角選單，選「以瀏覽器開啟」後再操作。</td></tr>
+      <tr><td>圖示是網頁截圖或字母，不是 App 圖示</td><td>等頁面完全載入後再加入；仍不對就刪除圖示重加一次。</td></tr>
+      <tr><td>開啟後筆劃顯示「—」或字型怪怪的</td><td>確認手機有連上網路，關掉後重新開啟。</td></tr>
+      <tr><td>想看到最新版本</td><td>不必重新加入；重新開啟即可。若仍是舊版，從上方往下拉重新整理。</td></tr>
+      <tr><td>想移除</td><td>長按主畫面圖示 → iPhone 點「移除 App」→「刪除」；Android 拖到「移除」或點「解除安裝」。</td></tr>
+    </table>
+  </div>
+
+  <a class="back-link" href="./index.html">← 回到姓名學筆劃查詢</a>
+
+</main>
+
+<div class="deco-bottom"></div>
+<footer>
+  本工具依康熙字典繁體筆劃計算，僅供參考
+</footer>
+
+</body>
+</html>

@@ -513,6 +513,12 @@ footer {
   letter-spacing: 0.05rem;
   line-height: 1.6;
 }
+.manual-link {
+  display: inline-block;
+  margin-top: 0.4rem;
+  font-size: 0.72rem;
+  color: var(--primary);
+}
 
 .deco-bottom {
   height: 3px;
