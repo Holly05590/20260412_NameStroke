@@ -314,7 +314,13 @@ function calculate() {
       ['wx-arrow-2', 'wx-ren',  'wx-di',  relInfo(renElem,  diElem)],
     ];
     requestAnimationFrame(positionRelArrows);
-    drawLiuyunChart(zong % 10, getBirthAge());
+    const age = getBirthAge();
+    showBirthAge(age);
+    drawLiuyunChart(zong % 10, age);
+    _fadongPalaces = [
+      ['命宮', zong], ['父母宮', tian], ['疾惡宮', ren], ['奴僕宮', di], ['遷移宮', wai],
+    ];
+    renderFadong(age);
   } else {
     ['w-tian','w-ren','w-di','w-wai','w-zong','w-dongli'].forEach(id =>
       document.getElementById(id).textContent = '—');
@@ -325,8 +331,50 @@ function calculate() {
       const el = document.getElementById(id);
       if (el) el.hidden = true;
     });
-    drawLiuyunChart(null, getBirthAge());
+    const age = getBirthAge();
+    showBirthAge(age);
+    drawLiuyunChart(null, age);
+    _fadongPalaces = [];
+    renderFadong(age);
   }
+}
+
+/* ════════════════════════════════════════════════════════
+   發動年齡
+   ════════════════════════════════════════════════════════ */
+// 起點 = 宮位數字 + 1，之後每 +9 發動一次，計算至 120 歲
+const FADONG_MAX_AGE = 120;
+let _fadongPalaces = [];   // [[宮位名稱, 宮位數字], ...]
+
+function calcFadongAges(n) {
+  const ages = [];
+  for (let a = n + 1; a <= FADONG_MAX_AGE; a += 9) ages.push(a);
+  return ages;
+}
+
+// age：目前虛歲，null 不高亮
+function renderFadong(age) {
+  const section = document.getElementById('fadong-section');
+  const list    = document.getElementById('fadong-list');
+  if (!section || !list) return;
+
+  if (!_fadongPalaces.length) {
+    section.classList.remove('visible');
+    list.innerHTML = '';
+    return;
+  }
+  section.classList.add('visible');
+
+  list.innerHTML = _fadongPalaces.map(([name, n]) => {
+    const chips = calcFadongAges(n).map(a => {
+      const cls = a === age ? 'fadong-age current' : 'fadong-age';
+      return `<span class="${cls}">${a}</span>`;
+    }).join('');
+    return `<div class="fadong-row">
+      <div class="fadong-head"><span class="fadong-name">${name}</span><span class="fadong-num">${n}</span></div>
+      <div class="fadong-ages">${chips}</div>
+    </div>`;
+  }).join('');
 }
 
 /* ════════════════════════════════════════════════════════
@@ -390,6 +438,12 @@ function calcAge(rocYear, month, day) {
   return age;
 }
 
+// 於出生年月日後方顯示虛歲，null 清空
+function showBirthAge(age) {
+  const el = document.getElementById('birth-age');
+  if (el) el.textContent = age != null ? `${age} 歲` : '';
+}
+
 function getBirthAge() {
   const yEl  = document.getElementById('b-year');
   const mEl  = document.getElementById('b-month');
@@ -444,8 +498,15 @@ function getBirthAge() {
 /* ════════════════════════════════════════════════════════
    流年運程圖（SVG）
    ════════════════════════════════════════════════════════ */
+// 太歲星：依虛歲尾數（0–9）對照
+const TAISUI_STARS = ['依附星','權星','空亡星','車星','田宅星','倦怠星','驛馬星','孤星','機運星','五鬼星'];
+
+function getTaisuiStar(age) {
+  return TAISUI_STARS[((age % 10) + 10) % 10];
+}
+
 // zongDigit：命宮個位數 (0–9)，null 不顯示數字
-// age：年齡，null 不顯示年齡徽章及高亮
+// age：年齡，null 不顯示太歲星徽章及高亮
 function drawLiuyunChart(zongDigit, age) {
   const container = document.getElementById('liuyun-chart');
   if (!container) return;
@@ -561,15 +622,13 @@ function drawLiuyunChart(zongDigit, age) {
   s += `<path d="${starPath} ${hole}" fill-rule="evenodd" fill="var(--accent)"/>`;
   s += `<circle cx="${CX}" cy="${CY}" r="${RK}" fill="none" stroke="var(--accent)" stroke-width="1.5"/>`;
 
-  // 年齡徽章（右上角，外圓之外）
+  // 太歲星徽章（右上角，外圓之外）
   if (age != null) {
-    const bx = 434, by = 12, bw = 72, bh = 54, mx = bx + bw / 2;
-    const FA = `font-family="Noto Sans TC,sans-serif" fill="var(--primary)" text-anchor="middle"`;
-    s += `<rect x="${bx}" y="${by}" width="${bw}" height="${bh}" rx="6" fill="var(--primary)" opacity="0.1"/>`;
-    s += `<rect x="${bx}" y="${by}" width="${bw}" height="${bh}" rx="6" fill="none" stroke="var(--primary)" stroke-width="1" opacity="0.35"/>`;
-    s += `<text x="${mx}" y="${by + 15}" dominant-baseline="middle" font-size="10" font-family="sans-serif" fill="var(--primary)" text-anchor="middle" opacity="0.8">年 齡</text>`;
-    s += `<text x="${mx - 4}" y="${by + 38}" dominant-baseline="middle" font-size="24" font-weight="700" ${FA}>${age}</text>`;
-    s += `<text x="${bx + bw - 6}" y="${by + 46}" dominant-baseline="middle" font-size="10" font-family="sans-serif" fill="var(--primary)" text-anchor="middle">歲</text>`;
+    const bx = 380, by = -12, bw = 132, bh = 80, mx = bx + bw / 2;
+    s += `<rect x="${bx}" y="${by}" width="${bw}" height="${bh}" rx="6" fill="var(--accent)" opacity="0.12"/>`;
+    s += `<rect x="${bx}" y="${by}" width="${bw}" height="${bh}" rx="6" fill="none" stroke="var(--accent)" stroke-width="1" opacity="0.45"/>`;
+    s += `<text x="${mx}" y="${by + 15}" dominant-baseline="middle" font-size="12" font-family="sans-serif" fill="var(--accent)" text-anchor="middle" opacity="0.9">太 歲</text>`;
+    s += `<text x="${mx}" y="${by + 50}" dominant-baseline="middle" font-size="42" font-weight="700" font-family="Noto Sans TC,sans-serif" fill="var(--accent)" text-anchor="middle">${getTaisuiStar(age)}</text>`;
   }
 
   s += `</svg>`;
@@ -633,6 +692,9 @@ document.getElementById('btn-clear').addEventListener('click', () => {
     }
     const zongText = document.getElementById('w-zong')?.textContent ?? '—';
     const zong = parseInt(zongText);
-    drawLiuyunChart(isNaN(zong) ? null : zong % 10, getBirthAge());
+    const age = getBirthAge();
+    showBirthAge(age);
+    drawLiuyunChart(isNaN(zong) ? null : zong % 10, age);
+    renderFadong(age);
   });
 });

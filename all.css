@@ -334,6 +334,12 @@ main {
 .birth-num::-webkit-inner-spin-button { -webkit-appearance: none; margin: 0; }
 .birth-num:focus { border-color: var(--primary); }
 .birth-year { width: 52px; }
+.birth-age {
+  margin-left: 0.4rem;
+  font-size: 1rem;
+  font-weight: 700;
+  color: var(--primary);
+}
 .birth-title {
   text-align: center;
   font-size: 0.8rem;
@@ -360,6 +366,64 @@ main {
   display: block;
   width: 100%;
   color: var(--ink);
+}
+
+/* ── 發動年齡 ── */
+#fadong-section { display: none; }
+#fadong-section.visible { display: block; }
+
+.fadong-rule {
+  text-align: center;
+  font-size: 0.68rem;
+  color: var(--ink);
+  opacity: 0.6;
+  margin-bottom: 0.5rem;
+}
+.fadong-row {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.5rem;
+  padding: 0.4rem 0;
+  border-top: 1px dashed var(--border);
+}
+.fadong-row:first-child { border-top: none; }
+.fadong-head {
+  flex: 0 0 4.2rem;
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  padding-top: 0.15rem;
+}
+.fadong-name {
+  font-size: 0.72rem;
+  font-weight: 700;
+  color: var(--primary);
+}
+.fadong-num {
+  font-size: 0.85rem;
+  font-weight: 700;
+  color: var(--ink);
+}
+.fadong-ages {
+  flex: 1;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.25rem;
+}
+.fadong-age {
+  min-width: 1.9rem;
+  padding: 0.1rem 0.25rem;
+  text-align: center;
+  font-size: 0.75rem;
+  color: var(--ink);
+  border: 1px solid var(--border);
+  border-radius: 3px;
+}
+.fadong-age.current {
+  background: var(--primary);
+  border-color: var(--primary);
+  color: #fff;
+  font-weight: 700;
 }
 
 .wuge-name {
