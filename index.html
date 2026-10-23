@@ -141,6 +141,18 @@
       <span class="birth-age" id="birth-age"></span>
     </div>
     <div class="birth-error" id="birth-error"></div>
+    <div class="birth-title">流年日期</div>
+    <div class="birth-row">
+      <span class="birth-label">民國</span>
+      <input type="number" id="ly-year"  class="birth-num birth-year"  placeholder="年" min="1" max="999" inputmode="numeric">
+      <span class="birth-sep">年</span>
+      <input type="number" id="ly-month" class="birth-num"             placeholder="月" min="1" max="12"  inputmode="numeric">
+      <span class="birth-sep">月</span>
+      <input type="number" id="ly-day"   class="birth-num"             placeholder="日" min="1" max="31"  inputmode="numeric">
+      <span class="birth-sep">日</span>
+      <button class="btn-today" id="btn-today" type="button">今天</button>
+    </div>
+    <div class="birth-error" id="liunian-error"></div>
     <div id="liuyun-chart"></div>
   </div>
 
@@ -151,9 +163,9 @@
     <div id="fadong-list"></div>
   </div>
 
-  <!-- 機會點 -->
+  <!-- 命宮機會點 -->
   <div class="card" id="jihui-section">
-    <div class="section-title">機會點</div>
+    <div class="section-title">命宮機會點</div>
     <div id="jihui-body"></div>
   </div>
 

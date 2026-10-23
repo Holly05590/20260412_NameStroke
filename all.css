@@ -352,6 +352,18 @@ main {
   border-color: #e53e3e !important;
   background: rgba(229,62,62,0.06);
 }
+.btn-today {
+  margin-left: 0.4rem;
+  padding: 0.15rem 0.55rem;
+  font-family: inherit;
+  font-size: 0.72rem;
+  color: var(--accent);
+  background: transparent;
+  border: 1px solid var(--accent);
+  border-radius: 4px;
+  cursor: pointer;
+}
+.btn-today:hover { background: var(--accent); color: #fff; }
 .birth-error {
   text-align: center;
   font-size: 0.72rem;
@@ -387,12 +399,24 @@ main {
   border-top: 1px dashed var(--border);
 }
 .fadong-row:first-child { border-top: none; }
-.fadong-head {
+.fadong-side {
   flex: 0 0 4.2rem;
+  padding-top: 0.15rem;
+}
+.fadong-head {
   display: flex;
   align-items: baseline;
   justify-content: space-between;
-  padding-top: 0.15rem;
+}
+.fadong-jihui {
+  margin-top: 0.15rem;
+  font-size: 0.66rem;
+  color: var(--accent);
+  white-space: nowrap;
+}
+.fadong-jihui b {
+  font-size: 0.85rem;
+  color: var(--primary);
 }
 .fadong-name {
   font-size: 0.72rem;

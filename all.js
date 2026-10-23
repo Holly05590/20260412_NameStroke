@@ -377,12 +377,18 @@ function renderFadong(age) {
   section.classList.add('visible');
 
   list.innerHTML = _fadongPalaces.map(([name, n]) => {
+    const jihui = JIHUI_PALACES.includes(name)
+      ? `<div class="fadong-jihui">機會點 <b>${calcJihui(n).name}</b></div>`
+      : '';
     const chips = calcFadongAges(n).map(a => {
       const cls = a === age ? 'fadong-age current' : 'fadong-age';
       return `<span class="${cls}">${a}</span>`;
     }).join('');
     return `<div class="fadong-row">
-      <div class="fadong-head"><span class="fadong-name">${name}</span><span class="fadong-num">${n}</span></div>
+      <div class="fadong-side">
+        <div class="fadong-head"><span class="fadong-name">${name}</span><span class="fadong-num">${n}</span></div>
+        ${jihui}
+      </div>
       <div class="fadong-ages">${chips}</div>
     </div>`;
   }).join('');
@@ -395,6 +401,8 @@ function renderFadong(age) {
 // 九宮立體格：第 A 列、第 c 欄的數字 = 相併(A + c)，c = 0..8
 // 在第 A 列找到數字 B 的欄位，該欄名稱即為機會點 → c = (B − A) mod 9
 const JIHUI_COLS = ['名','財','官','利','交','敗','衰','煞','絕'];
+// 發動年齡中顯示機會點的宮位（A 改用該宮位數字的相併數）
+const JIHUI_PALACES = ['命宮', '父母宮', '疾惡宮', '奴僕宮'];
 
 // 相併數：各位數相加，超過 9 取 9 的餘數（整除時為 9）
 function digitMerge(n) {
@@ -406,7 +414,7 @@ function gridValue(row, c) {
 }
 
 function calcJihui(zong) {
-  const rocNow = new Date().getFullYear() - 1911;
+  const rocNow = liunianOrToday().roc;
   const A = digitMerge(zong);
   const B = digitMerge(rocNow);
   const col = ((B - A) % 9 + 9) % 9;
@@ -448,7 +456,7 @@ function renderJihui(zong) {
       <div><span class="jihui-label">A　命宮</span>${zong} → 相併 <b>${A}</b></div>
       <div><span class="jihui-label">B　民國 ${rocNow} 年</span>${rocNow} → 相併 <b>${B}</b></div>
     </div>
-    <div class="jihui-result">機會點：<span class="jihui-star">${JIHUI_COLS[col]}</span></div>
+    <div class="jihui-result">命宮機會點：<span class="jihui-star">${JIHUI_COLS[col]}</span></div>
     ${t}`;
 }
 
@@ -495,6 +503,8 @@ function buildExportRows() {
   rows.push(['【出生日期與年齡】']);
   if (age != null) {
     rows.push(['出生日期', `民國 ${y} 年 ${m} 月 ${dd} 日`]);
+    const ly = readLiunian().date;
+    rows.push(['流年日期', `民國 ${ly.roc} 年 ${ly.m} 月 ${ly.d} 日`]);
     rows.push(['虛歲', age]);
     rows.push(['太歲星', getTaisuiStar(age)]);
   } else {
@@ -520,10 +530,10 @@ function buildExportRows() {
   rows.push([]);
 
   const j = calcJihui(d.zong);
-  rows.push(['【機會點】']);
+  rows.push(['【命宮機會點】']);
   rows.push(['A 命宮相併數', `${d.zong} → ${j.A}`]);
   rows.push([`B 民國 ${j.rocNow} 年相併數`, `${j.rocNow} → ${j.B}`]);
-  rows.push(['機會點', j.name]);
+  rows.push(['命宮機會點', j.name]);
 
   return rows;
 }
@@ -644,23 +654,67 @@ function daysInMonth(rocYear, month) {
 //   115 − 62 + 2 = 55，未到10月5日 −1 = 54 ✓
 // 範例二：100年11月29日，今日 ROC 115年5月13日
 //   115 − 100 + 2 = 17，未到5月29日 −1，生日在後半年 −1 = 15 ✓
-function calcAge(rocYear, month, day) {
-  const now = new Date();
-  const gy  = now.getFullYear();
-  const gm  = now.getMonth() + 1;
-  const gd  = now.getDate();
+// ref：流年日期 { roc, m, d }（民國年月日）
+function calcAge(rocYear, month, day, ref) {
+  const gm  = ref.m;
+  const gd  = ref.d;
 
   let hm = month + 6;
   const wrapYear = hm > 12;   // 生日 7–12 月 → 半週年落在次年
   if (wrapYear) hm -= 12;
 
-  const rocNow    = gy - 1911;
+  const rocNow    = ref.roc;
   const halfReach = (gm * 100 + gd) >= (hm * 100 + day);
 
   let age = rocNow - rocYear + 2;
   if (!halfReach) age--;   // 今年切換點未到
   if (wrapYear)   age--;   // 半週年跨年修正
   return age;
+}
+
+/* ── 流年日期（預設今天，可修改；年齡、太歲星、機會點皆依此日期計算） ── */
+function todayROC() {
+  const t = new Date();
+  return { roc: t.getFullYear() - 1911, m: t.getMonth() + 1, d: t.getDate() };
+}
+
+function setLiunianToday() {
+  const t = todayROC();
+  document.getElementById('ly-year').value  = t.roc;
+  document.getElementById('ly-month').value = t.m;
+  document.getElementById('ly-day').value   = t.d;
+}
+
+// 讀取並驗證流年日期：{ date: {roc,m,d} | null, errs: [...], bad: [欄位 id] }
+function readLiunian() {
+  const yv = document.getElementById('ly-year')?.value ?? '';
+  const mv = document.getElementById('ly-month')?.value ?? '';
+  const dv = document.getElementById('ly-day')?.value ?? '';
+  const y = parseInt(yv), m = parseInt(mv), d = parseInt(dv);
+  const errs = [], bad = [];
+  const validY = !isNaN(y) && y >= 1 && y <= 999;
+  const validM = !isNaN(m) && m >= 1 && m <= 12;
+  if (!validY) { bad.push('ly-year');  errs.push('流年年份請輸入 1–999'); }
+  if (!validM) { bad.push('ly-month'); errs.push('流年月份請輸入 1–12'); }
+  const maxDay = validY && validM ? daysInMonth(y, m) : 31;
+  if (isNaN(d) || d < 1 || d > maxDay) {
+    bad.push('ly-day');
+    errs.push(validM ? `${m} 月最多 ${maxDay} 日` : '流年日期不合法');
+  }
+  return { date: errs.length ? null : { roc: y, m, d }, errs, bad };
+}
+
+// 流年日期，不合法時以今天代替（供機會點等年份計算）
+function liunianOrToday() {
+  return readLiunian().date ?? todayROC();
+}
+
+function showLiunianError() {
+  const { errs, bad } = readLiunian();
+  ['ly-year','ly-month','ly-day'].forEach(id =>
+    document.getElementById(id)?.classList.toggle('input-error', bad.includes(id)));
+  const el = document.getElementById('liunian-error');
+  if (el) el.textContent = errs.join('　');
 }
 
 // 於出生年月日後方顯示虛歲，null 清空
@@ -717,7 +771,14 @@ function getBirthAge() {
   }
   if (!yv || !mv || !dv || !validY || !validM) return null;
 
-  return calcAge(y, m, d);
+  const ref = readLiunian().date;
+  if (!ref) return null;
+  const age = calcAge(y, m, d, ref);
+  if (age < 1) {
+    if (errEl) errEl.textContent = '出生日期晚於流年日期';
+    return null;
+  }
+  return age;
 }
 
 /* ════════════════════════════════════════════════════════
@@ -871,6 +932,8 @@ document.getElementById('btn-clear').addEventListener('click', () => {
   });
   const errEl = document.getElementById('birth-error');
   if (errEl) errEl.textContent = '';
+  setLiunianToday();
+  showLiunianError();
   calculate();
   document.getElementById('c1').focus();
 });
@@ -908,18 +971,30 @@ document.getElementById('btn-clear').addEventListener('click', () => {
   });
 });
 
-// 出生日期變更 → 重繪流年圖（不重新計算五格）
-['b-year', 'b-month', 'b-day'].forEach(id => {
+// 出生日期或流年日期變更 → 重算年齡、流年圖、發動年齡、機會點（不重新計算五格）
+function refreshLiunian() {
+  showLiunianError();
+  const zong = parseInt(document.getElementById('w-zong')?.textContent ?? '—');
+  const age = getBirthAge();
+  showBirthAge(age);
+  drawLiuyunChart(isNaN(zong) ? null : zong % 10, age);
+  renderFadong(age);
+  renderJihui(isNaN(zong) ? null : zong);
+}
+
+['b-year', 'b-month', 'b-day', 'ly-year', 'ly-month', 'ly-day'].forEach(id => {
   document.getElementById(id)?.addEventListener('input', () => {
-    if (id === 'b-year') {
-      const el = document.getElementById('b-year');
+    if (id === 'b-year' || id === 'ly-year') {
+      const el = document.getElementById(id);
       if (el.value.length > 3) el.value = el.value.slice(0, 3);
     }
-    const zongText = document.getElementById('w-zong')?.textContent ?? '—';
-    const zong = parseInt(zongText);
-    const age = getBirthAge();
-    showBirthAge(age);
-    drawLiuyunChart(isNaN(zong) ? null : zong % 10, age);
-    renderFadong(age);
+    refreshLiunian();
   });
 });
+
+document.getElementById('btn-today')?.addEventListener('click', () => {
+  setLiunianToday();
+  refreshLiunian();
+});
+
+setLiunianToday();
