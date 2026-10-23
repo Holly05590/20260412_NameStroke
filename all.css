@@ -426,6 +426,82 @@ main {
   font-weight: 700;
 }
 
+/* ── 下載結果 ── */
+#export-section { display: none; }
+#export-section.visible { display: block; }
+.export-row {
+  display: flex;
+  justify-content: center;
+  gap: 0.8rem;
+}
+.btn-export {
+  padding: 0.4rem 1.2rem;
+  font-family: inherit;
+  font-size: 0.8rem;
+  font-weight: 700;
+  letter-spacing: 0.1rem;
+  color: var(--primary);
+  background: transparent;
+  border: 1px solid var(--primary);
+  border-radius: 4px;
+  cursor: pointer;
+  transition: background 0.15s, color 0.15s;
+}
+.btn-export:hover { background: var(--primary); color: #fff; }
+.btn-export:disabled { opacity: 0.5; cursor: wait; }
+
+/* ── 機會點 ── */
+#jihui-section { display: none; }
+#jihui-section.visible { display: block; }
+
+.jihui-calc {
+  font-size: 0.8rem;
+  color: var(--ink);
+  line-height: 1.8;
+}
+.jihui-calc b { color: var(--primary); font-size: 0.95rem; }
+.jihui-label {
+  display: inline-block;
+  min-width: 7.5rem;
+  color: var(--accent);
+}
+.jihui-result {
+  text-align: center;
+  margin: 0.4rem 0 0.6rem;
+  font-size: 0.9rem;
+  color: var(--ink);
+}
+.jihui-star {
+  font-size: 1.6rem;
+  font-weight: 900;
+  color: var(--primary);
+  vertical-align: middle;
+}
+.jihui-grid {
+  width: 100%;
+  border-collapse: collapse;
+  table-layout: fixed;
+  font-size: 0.78rem;
+  color: var(--ink);
+  text-align: center;
+}
+.jihui-grid th, .jihui-grid td {
+  border: 1px solid var(--border);
+  padding: 0.22rem 0;
+}
+.jihui-grid th { color: var(--primary); font-weight: 700; }
+.jihui-grid tr.hit-row td, .jihui-grid tr.hit-row th {
+  background: color-mix(in srgb, var(--primary) 12%, transparent);
+}
+.jihui-grid th.hit-col {
+  background: color-mix(in srgb, var(--primary) 12%, transparent);
+}
+.jihui-grid td.hit {
+  background: var(--primary);
+  color: #fff;
+  font-weight: 700;
+}
+
 .wuge-name {
   font-size: 0.65rem;
   color: var(--primary);
@@ -692,4 +768,33 @@ html[data-theme="fresh"] .input-group input::placeholder {
 
 html[data-theme="fresh"] footer {
   color: rgba(30,41,59,0.45);
+}
+
+/* ── 操作手冊頁（install.html） ── */
+.manual { font-size: 0.85rem; line-height: 1.75; color: var(--ink); }
+.manual p { margin-bottom: 0.5rem; }
+.manual ol, .manual ul { padding-left: 1.4rem; margin-bottom: 0.5rem; }
+.manual li { margin-bottom: 0.3rem; }
+.manual b { color: var(--primary); }
+.manual .note { font-size: 0.78rem; opacity: 0.75; }
+.manual .url {
+  display: inline-block;
+  word-break: break-all;
+  color: var(--primary);
+}
+.faq { width: 100%; border-collapse: collapse; font-size: 0.78rem; }
+.faq th, .faq td {
+  border-top: 1px solid var(--border);
+  padding: 0.45rem 0.3rem;
+  text-align: left;
+  vertical-align: top;
+}
+.faq th { color: var(--primary); white-space: nowrap; }
+.faq td:first-child { font-weight: 700; width: 38%; }
+.back-link {
+  display: block;
+  text-align: center;
+  margin-top: 0.8rem;
+  font-size: 0.8rem;
+  color: var(--primary);
 }

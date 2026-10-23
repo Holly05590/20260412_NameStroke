@@ -321,6 +321,14 @@ function calculate() {
       ['命宮', zong], ['父母宮', tian], ['疾惡宮', ren], ['奴僕宮', di], ['遷移宮', wai],
     ];
     renderFadong(age);
+    renderJihui(zong);
+    _exportData = {
+      chars, strokes: strokes.map(n => n ?? ''),
+      palaces: [['父母宮', tian], ['疾惡宮', ren], ['奴僕宮', di], ['遷移宮', wai], ['命宮', zong]],
+      dongli: calcDongli(ren, di),
+      zong,
+    };
+    showExport(true);
   } else {
     ['w-tian','w-ren','w-di','w-wai','w-zong','w-dongli'].forEach(id =>
       document.getElementById(id).textContent = '—');
@@ -336,6 +344,9 @@ function calculate() {
     drawLiuyunChart(null, age);
     _fadongPalaces = [];
     renderFadong(age);
+    renderJihui(null);
+    _exportData = null;
+    showExport(false);
   }
 }
 
@@ -376,6 +387,220 @@ function renderFadong(age) {
     </div>`;
   }).join('');
 }
+
+/* ════════════════════════════════════════════════════════
+   機會點（九宮立體格）
+   ════════════════════════════════════════════════════════ */
+// A = 命宮相併數，B = 國家歲數（今年民國年）相併數
+// 九宮立體格：第 A 列、第 c 欄的數字 = 相併(A + c)，c = 0..8
+// 在第 A 列找到數字 B 的欄位，該欄名稱即為機會點 → c = (B − A) mod 9
+const JIHUI_COLS = ['名','財','官','利','交','敗','衰','煞','絕'];
+
+// 相併數：各位數相加，超過 9 取 9 的餘數（整除時為 9）
+function digitMerge(n) {
+  return n > 0 ? (n - 1) % 9 + 1 : 0;
+}
+
+function gridValue(row, c) {
+  return digitMerge(row + c);
+}
+
+function calcJihui(zong) {
+  const rocNow = new Date().getFullYear() - 1911;
+  const A = digitMerge(zong);
+  const B = digitMerge(rocNow);
+  const col = ((B - A) % 9 + 9) % 9;
+  return { rocNow, A, B, col, name: JIHUI_COLS[col] };
+}
+
+// zong：命宮數字，null 隱藏
+function renderJihui(zong) {
+  const section = document.getElementById('jihui-section');
+  const body    = document.getElementById('jihui-body');
+  if (!section || !body) return;
+
+  if (zong == null) {
+    section.classList.remove('visible');
+    body.innerHTML = '';
+    return;
+  }
+  section.classList.add('visible');
+
+  const { rocNow, A, B, col } = calcJihui(zong);
+
+  let t = '<table class="jihui-grid"><tr><th></th>';
+  JIHUI_COLS.forEach((name, c) => {
+    t += `<th class="${c === col ? 'hit-col' : ''}">${name}</th>`;
+  });
+  t += '</tr>';
+  for (let r = 1; r <= 9; r++) {
+    t += `<tr class="${r === A ? 'hit-row' : ''}"><th>${r}</th>`;
+    for (let c = 0; c < 9; c++) {
+      const hit = r === A && c === col;
+      t += `<td class="${hit ? 'hit' : ''}">${gridValue(r, c)}</td>`;
+    }
+    t += '</tr>';
+  }
+  t += '</table>';
+
+  body.innerHTML = `
+    <div class="jihui-calc">
+      <div><span class="jihui-label">A　命宮</span>${zong} → 相併 <b>${A}</b></div>
+      <div><span class="jihui-label">B　民國 ${rocNow} 年</span>${rocNow} → 相併 <b>${B}</b></div>
+    </div>
+    <div class="jihui-result">機會點：<span class="jihui-star">${JIHUI_COLS[col]}</span></div>
+    ${t}`;
+}
+
+/* ════════════════════════════════════════════════════════
+   下載結果（Excel / CSV）— 暫停使用：index.html 的下載卡片已註解，按鈕不存在時以下程式不會執行
+   ════════════════════════════════════════════════════════ */
+let _exportData = null;   // 最近一次計算結果，null 表示尚無可下載內容
+
+// 十二長生 10 階段，自冠帶起依序（與流年圖數字標註一致）
+const LIUYUN_FROM_KUANDAI = ['冠帶','臨官','帝旺','衰','病','死','絕','胎','養','長生'];
+
+function showExport(on) {
+  document.getElementById('export-section')?.classList.toggle('visible', on);
+}
+
+// 組出下載用的表格（二維陣列）
+function buildExportRows() {
+  const d = _exportData;
+  const rows = [];
+  const today = new Date();
+  const pad = n => String(n).padStart(2, '0');
+
+  rows.push(['姓名學筆劃鑑定']);
+  rows.push(['產生日期', `${today.getFullYear()}-${pad(today.getMonth() + 1)}-${pad(today.getDate())}`]);
+  rows.push([]);
+
+  rows.push(['【姓名筆劃】']);
+  rows.push(['位置', '字', '筆劃']);
+  ['姓', '名一', '名二'].forEach((pos, i) => {
+    if (d.chars[i]) rows.push([pos, d.chars[i], d.strokes[i]]);
+  });
+  rows.push([]);
+
+  rows.push(['【五格宮位】']);
+  rows.push(['宮位', '數字', '五行']);
+  d.palaces.forEach(([name, n]) => rows.push([name, n, toWuxingElem(n)]));
+  rows.push(['動力元素', d.dongli, '']);
+  rows.push([]);
+
+  const age = getBirthAge();
+  const y = document.getElementById('b-year')?.value;
+  const m = document.getElementById('b-month')?.value;
+  const dd = document.getElementById('b-day')?.value;
+  rows.push(['【出生日期與年齡】']);
+  if (age != null) {
+    rows.push(['出生日期', `民國 ${y} 年 ${m} 月 ${dd} 日`]);
+    rows.push(['虛歲', age]);
+    rows.push(['太歲星', getTaisuiStar(age)]);
+  } else {
+    rows.push(['出生日期', '未輸入']);
+  }
+  rows.push([]);
+
+  const zd = d.zong % 10;
+  rows.push([`【流年數字】（命宮個位數 ${zd}，自冠帶起，流年數字${zd}冠帶）`]);
+  rows.push(['宮位', '數字']);
+  LIUYUN_FROM_KUANDAI.forEach((label, i) => rows.push([label, (zd + i) % 10]));
+  // 今年流年：虛歲個位數落在哪個宮位（與流年圖高亮格一致）
+  if (age != null) {
+    const ad = age % 10;
+    const idx = (ad - zd + 10) % 10;
+    rows.push([`今年流年（虛歲 ${age}，流年數字 ${ad}）`, LIUYUN_FROM_KUANDAI[idx]]);
+  }
+  rows.push([]);
+
+  rows.push(['【發動年齡】（宮位數字＋1 起，每＋9 發動一次，至 120 歲）']);
+  [['命宮', d.zong], ...d.palaces.filter(([name]) => name !== '命宮')].forEach(([name, n]) =>
+    rows.push([name, n, ...calcFadongAges(n)]));
+  rows.push([]);
+
+  const j = calcJihui(d.zong);
+  rows.push(['【機會點】']);
+  rows.push(['A 命宮相併數', `${d.zong} → ${j.A}`]);
+  rows.push([`B 民國 ${j.rocNow} 年相併數`, `${j.rocNow} → ${j.B}`]);
+  rows.push(['機會點', j.name]);
+
+  return rows;
+}
+
+// 姓名學_姓名_YYYYMMDD（檔名與 Excel 工作表名稱共用）
+function exportBaseName() {
+  const name = _exportData.chars.join('');
+  const t = new Date();
+  const ymd = t.getFullYear() + String(t.getMonth() + 1).padStart(2, '0') + String(t.getDate()).padStart(2, '0');
+  return `姓名學_${name}_${ymd}`;
+}
+
+function exportFileName(ext) {
+  return `${exportBaseName()}.${ext}`;
+}
+
+function downloadBlob(blob, filename) {
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = filename;
+  document.body.appendChild(a);
+  a.click();
+  a.remove();
+  setTimeout(() => URL.revokeObjectURL(url), 1000);
+}
+
+function downloadCSV() {
+  if (!_exportData) return;
+  const esc = v => {
+    let s = String(v ?? '');
+    // 防 CSV 公式注入：文字以 = + - @ 或控制字元開頭時加上 ' 前綴
+    if (typeof v === 'string' && /^[=+\-@\t\r]/.test(s)) s = "'" + s;
+    return /[",\r\n]/.test(s) ? '"' + s.replace(/"/g, '""') + '"' : s;
+  };
+  const csv = buildExportRows().map(r => r.map(esc).join(',')).join('\r\n');
+  // 加 BOM，Excel 開啟時中文才不會亂碼
+  downloadBlob(new Blob(['\uFEFF' + csv], { type: 'text/csv;charset=utf-8' }), exportFileName('csv'));
+}
+
+// SheetJS 於第一次下載 Excel 時才載入
+// 0.18.5 有已知弱點（CVE-2023-30533、CVE-2024-22363），改用官方 CDN 0.20.3 並以 SRI 驗證完整性
+const XLSX_SRC = 'https://cdn.sheetjs.com/xlsx-0.20.3/package/dist/xlsx.full.min.js';
+const XLSX_SRI = 'sha384-EnyY0/GSHQGSxSgMwaIPzSESbqoOLSexfnSMN2AP+39Ckmn92stwABZynq1JyzdT';
+function loadXLSX() {
+  if (window.XLSX) return Promise.resolve(window.XLSX);
+  return new Promise((resolve, reject) => {
+    const s = document.createElement('script');
+    s.src = XLSX_SRC;
+    s.integrity = XLSX_SRI;
+    s.crossOrigin = 'anonymous';
+    s.onload  = () => resolve(window.XLSX);
+    s.onerror = () => reject(new Error('xlsx load failed'));
+    document.head.appendChild(s);
+  });
+}
+
+async function downloadExcel() {
+  if (!_exportData) return;
+  const btn = document.getElementById('btn-xlsx');
+  if (btn) btn.disabled = true;
+  try {
+    const XLSX = await loadXLSX();
+    const ws = XLSX.utils.aoa_to_sheet(buildExportRows());
+    ws['!cols'] = [{ wch: 18 }, { wch: 14 }, ...Array(14).fill({ wch: 6 })];
+    const wb = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(wb, ws, exportBaseName());
+    XLSX.writeFile(wb, exportFileName('xlsx'));
+  } catch (e) {
+    alert('Excel 元件載入失敗，請確認網路連線，或改用「下載 CSV」。');
+  } finally {
+    if (btn) btn.disabled = false;
+  }
+}
+
+document.getElementById('btn-xlsx')?.addEventListener('click', downloadExcel);
+document.getElementById('btn-csv')?.addEventListener('click', downloadCSV);
 
 /* ════════════════════════════════════════════════════════
    主題切換

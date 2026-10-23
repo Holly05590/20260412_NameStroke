@@ -3,44 +3,14 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' https://fastly.jsdelivr.net; style-src 'self' https://fonts.googleapis.com; font-src https://fonts.gstatic.com; img-src 'self' data:; connect-src 'self'; object-src 'none'; base-uri 'self'; form-action 'none'">
+  <meta name="referrer" content="strict-origin-when-cross-origin">
   <title>手機加入 App 操作手冊</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;700;900&display=swap" rel="stylesheet">
   <link rel="icon" type="image/png" href="./icon.png">
   <link rel="stylesheet" href="./all.css">
-  <script>
-    // 套用主頁所選主題
-    try { document.documentElement.dataset.theme = localStorage.getItem('namestroke-theme') || 'tech'; } catch (e) {}
-  </script>
-  <style>
-    .manual { font-size: 0.85rem; line-height: 1.75; color: var(--ink); }
-    .manual p { margin-bottom: 0.5rem; }
-    .manual ol, .manual ul { padding-left: 1.4rem; margin-bottom: 0.5rem; }
-    .manual li { margin-bottom: 0.3rem; }
-    .manual b { color: var(--primary); }
-    .manual .note { font-size: 0.78rem; opacity: 0.75; }
-    .manual .url {
-      display: inline-block;
-      word-break: break-all;
-      color: var(--primary);
-    }
-    .faq { width: 100%; border-collapse: collapse; font-size: 0.78rem; }
-    .faq th, .faq td {
-      border-top: 1px solid var(--border);
-      padding: 0.45rem 0.3rem;
-      text-align: left;
-      vertical-align: top;
-    }
-    .faq th { color: var(--primary); white-space: nowrap; }
-    .faq td:first-child { font-weight: 700; width: 38%; }
-    .back-link {
-      display: block;
-      text-align: center;
-      margin-top: 0.8rem;
-      font-size: 0.8rem;
-      color: var(--primary);
-    }
-  </style>
+  <script src="./theme-init.js"></script>
 </head>
 <body>
 

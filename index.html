@@ -3,6 +3,8 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' https://fastly.jsdelivr.net; style-src 'self' https://fonts.googleapis.com; font-src https://fonts.gstatic.com; img-src 'self' data:; connect-src 'self'; object-src 'none'; base-uri 'self'; form-action 'none'">
+  <meta name="referrer" content="strict-origin-when-cross-origin">
   <title>姓名學筆劃鑑定</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;700;900&display=swap" rel="stylesheet">
@@ -149,6 +151,22 @@
     <div id="fadong-list"></div>
   </div>
 
+  <!-- 機會點 -->
+  <div class="card" id="jihui-section">
+    <div class="section-title">機會點</div>
+    <div id="jihui-body"></div>
+  </div>
+
+  <!-- 下載結果（暫停使用；恢復時取消註解，並於兩頁 CSP 的 script-src 加回 https://cdn.sheetjs.com）
+  <div class="card" id="export-section">
+    <div class="section-title">下載結果</div>
+    <div class="export-row">
+      <button class="btn-export" id="btn-xlsx">下載 Excel</button>
+      <button class="btn-export" id="btn-csv">下載 CSV</button>
+    </div>
+  </div>
+  -->
+
 </main>
 
 <div class="deco-bottom"></div>
@@ -158,7 +176,9 @@
 </footer>
 
 <!-- cnchar-all：含完整繁簡字庫 -->
-<script src="https://fastly.jsdelivr.net/npm/cnchar-all/cnchar.all.min.js"></script>
+<script src="https://fastly.jsdelivr.net/npm/cnchar-all@3.2.6/cnchar.all.min.js"
+        integrity="sha384-UZ0wJM9WwNh9D7RRF4cts432RtO8LBpMJ5cSIT7GU7/JgmEFqc5mmn1QD3JVmMnE"
+        crossorigin="anonymous"></script>
 <script src="./unihan-rs.js"></script>
 <script src="./all.js"></script>
 </body>
